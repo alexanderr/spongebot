@@ -1,6 +1,11 @@
 import sys
 
+if sys.version_info < (3, 5):
+    print('Python 3.5 is required to run spongebot. Exiting...')
+    sys.exit(0)
+
 import discord
+
 
 from spongebot.spongebot import Spongebot
 
