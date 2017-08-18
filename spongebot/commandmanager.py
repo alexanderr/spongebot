@@ -362,6 +362,9 @@ class CommandManager:
         if user is None or len(user.inventory) == 0:
             await self.bot.send_message(source.channel, '```You do not own any items to rename.```')
             return
+        if to_name.isdigit():
+            await self.bot.send_message(source.channel, '```Please choose a different name; digits are reserved.```')
+            return
 
         # Get the voice line from the name
         try:
