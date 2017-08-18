@@ -70,8 +70,12 @@ class SpongebotUser:
 
     def as_document(self):
         documented_inv = [item.as_document() for item in self.inventory]
+        documented_lsi = self.last_sold_item
+        if self.last_sold_item is not None:
+            documented_lsi = self.last_sold_item.as_document()
         document = self.__dict__.copy()
         document['inventory'] = documented_inv
+        document['last_sold_item'] = documented_lsi
         return document
 
     def from_document(self, document):
@@ -85,7 +89,18 @@ class SpongebotUser:
                 continue
             item.from_document(doc)
             undocumented_inventory.append(item)
+        undocumented_lsi = None
+        if document.get('last_sold_item'):
+            item = None
+            if document['last_sold_item']['item_type'] == 'frame':
+                item = FrameInventoryItem(0, 0, 0, 0, 0)
+            elif document['last_sold_item']['item_type'] == 'voiceline':
+                item = VoicelineInventoryItem(0, 0, 0, 0, 0)
+            if item is not None:
+                item.from_document(document['last_sold_item'])
+                undocumented_lsi = item
         document['inventory'] = undocumented_inventory
+        document['last_sold_item'] = undocumented_lsi
         self.__dict__.update(document)
 
 
