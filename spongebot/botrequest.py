@@ -65,7 +65,7 @@ class SellRequest(BotRequest):
             renamed = True
             item.name = str(item.idx)
         # Add item back to inventory
-        data.inventory.add(item)
+        data.inventory.append(item)
         # Remove item_id from last sold item
         data.last_sold_item = None
         # Take money back
