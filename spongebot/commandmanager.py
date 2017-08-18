@@ -420,8 +420,8 @@ class CommandManager:
             user.current_points += amount
             await self.bot.send_message(source.channel, '```Adding %s point(s) to %s.```' % (amount, source.author.name))
         elif t_type == 'remove':
-            user.total_points -= amount
-            user.current_points -= amount
+            user.total_points = max(0, user.total_points - amount)
+            user.current_points = max(0, user.current_points - amount)
             await self.bot.send_message(source.channel, '```Removing %s point(s) from %s.```' % (amount, source.author.name))
         else:
             await self.bot.send_message(source.channel, '```Invalid use of points command.```')
