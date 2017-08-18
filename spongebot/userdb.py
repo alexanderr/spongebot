@@ -42,6 +42,7 @@ class UserMongoDB:
         return spongebot_user
 
     def update(self, user, new):
+        print('Updating %s to %s' % (user, new))
         user_id = get_user_id(user)
         self.userdb.update_one({'_id': user_id}, new)
 
@@ -68,15 +69,31 @@ class SpongebotUser:
         self.last_sold_item = None
 
     def as_document(self):
-        return self.__dict__
+        documented_inv = [item.as_document() for item in self.inventory]
+        document = self.__dict__
+        document['inventory'] = documented_inv
+        return document
 
     def from_document(self, document):
         self.__dict__.update(document)
+        undocumented_inventory = []
+        for doc in self.inventory:
+            if doc['type'] == 'frame':
+                item = FrameInventoryItem(0, 0, 0, 0, 0)
+            elif doc['type'] == 'voiceline':
+                item = VoicelineInventoryItem(0, 0, 0, 0, 0)
+            else:
+                # Bad inventory; reset
+                self.inventory = []
+                return
+            item.from_document(doc)
+            undocumented_inventory.append(item)
+        self.inventory = undocumented_inventory
 
 
 class InventoryItem:
-    def __init__(self, type, date_received):
-        self.type = type
+    def __init__(self, item_type, date_received):
+        self.item_type = item_type
         self.date_received = date_received
 
     def as_document(self):
