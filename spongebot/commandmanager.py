@@ -361,6 +361,7 @@ class CommandManager:
         user = self.bot.userdb.get(source.author.id)
         if user is None or len(user.inventory) == 0:
             await self.bot.send_message(source.channel, '```You do not own any items to rename.```')
+            return
 
         # Get the voice line from the name
         try:
