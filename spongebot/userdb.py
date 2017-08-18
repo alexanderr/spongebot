@@ -70,25 +70,23 @@ class SpongebotUser:
 
     def as_document(self):
         documented_inv = [item.as_document() for item in self.inventory]
-        document = self.__dict__
+        document = self.__dict__.copy()
         document['inventory'] = documented_inv
         return document
 
     def from_document(self, document):
-        self.__dict__.update(document)
         undocumented_inventory = []
-        for doc in self.inventory:
+        for doc in document['inventory']:
             if doc['item_type'] == 'frame':
                 item = FrameInventoryItem(0, 0, 0, 0, 0)
             elif doc['item_type'] == 'voiceline':
                 item = VoicelineInventoryItem(0, 0, 0, 0, 0)
             else:
-                # Bad inventory; reset
-                self.inventory = []
-                return
+                continue
             item.from_document(doc)
             undocumented_inventory.append(item)
-        self.inventory = undocumented_inventory
+        document['inventory'] = undocumented_inventory
+        self.__dict__.update(document)
 
 
 class InventoryItem:
