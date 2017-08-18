@@ -74,6 +74,7 @@ class VoicelineCrate(Crate):
         self.channel = channel
         self.crate_id = 0
         self.user_id = user_id
+        self.type = 0
 
     def generate(self, crate_manager):
         episode = random.choice(self.get_video_filenames())
@@ -85,13 +86,25 @@ class VoicelineCrate(Crate):
         intro = 5
         outro = 5
 
-        clip = 3
+        rng = random.random()
+        if rng < .10:
+            clip = 7
+            self.type = 3
+        elif rng < .33:
+            clip = 5
+            self.type = 2
+        else:
+            clip = 3
+            self.type = 1
 
         length = int(len(audio) / 1000) - outro - clip
 
         start = random.randint(intro, length) * 1000  # time in ms
 
         voiceline = audio[start:start + (clip * 1000)]
+
+        s = AudioSegment.silent(duration=250)
+        voiceline = voiceline.append(s, crossfade=250)
 
         directory = os.path.join(self.VOICELINE_DIRECTORY, str(self.user_id))
 
