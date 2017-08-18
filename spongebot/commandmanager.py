@@ -304,7 +304,7 @@ class CommandManager:
         if user is None or len(user.inventory) == 0:
             await self.bot.send_message(source.channel, '```You do not own any frames.```')
 
-        # Get the voice line from the name
+        # Get the frame from the name
         try:
             frame = [item for item in user.inventory if item.name == name and item.item_type == 'frame'][0]
         except IndexError:
@@ -330,28 +330,33 @@ class CommandManager:
     async def c_sell(self, source, item_type, name):
         if item_type == 'frame' or item_type == 'voiceline':
             self.bot.request_manager.create_request(SellRequest(source.author.id, self.bot, item_type, name))
+            await self.bot.send_message(
+                source.channel, '```Are you sure you want to sell %s %s? ($confirm or $cancel)```' % (item_type, name))
         else:
             await self.bot.send_message(
-                source.channel, '```Are you sure you want to sell %s %s? ($confirm or $cancel)```' % item_type, name)
+                source.channel, '```Invalid use of command "sell"```')
 
     @command(context=PRIVATE, access=USER, types=())
     async def c_confirm(self, source):
         try:
-            self.bot.request_manager.confirm_request(source.author.id)
+            msg = self.bot.request_manager.confirm_request(source.author.id)
+            await self.bot.send_message(source.channel, msg)
         except BotRequestException as e:
             await self.bot.send_message(source.channel, '```%s```' % e.message)
 
     @command(context=PRIVATE, access=USER, types=())
     async def c_cancel(self, source):
         try:
-            self.bot.request_manager.cancel_request(source.author.id)
+            msg = self.bot.request_manager.cancel_request(source.author.id)
+            await self.bot.send_message(source.channel, msg)
         except BotRequestException as e:
             await self.bot.send_message(source.channel, '```%s```' % e.message)
 
     @command(context=PRIVATE, access=USER, types=())
     async def c_undo(self, source):
         try:
-            self.bot.request_manager.undo_request(source.author.id)
+            msg = self.bot.request_manager.undo_request(source.author.id)
+            await self.bot.send_message(source.channel, msg)
         except BotRequestException as e:
             await self.bot.send_message(source.channel, '```%s```' % e.message)
 

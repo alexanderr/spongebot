@@ -48,6 +48,7 @@ class SellRequest(BotRequest):
         data.current_points += 15
         # Update user entry
         self.bot.userdb.update(self.requester, {'$set': data.as_document()})
+        return 'Successfully sold sold **%s** **%s** for **%s** points.' % (self.item_type, self.item_name, 15)
 
     def undo(self):
         BotRequest.undo(self)
@@ -65,6 +66,12 @@ class SellRequest(BotRequest):
         data.current_points -= 15
         # Update user entry
         self.bot.userdb.update(self.requester, {'$set': data.as_document()})
+        msg = 'Returned **%s** **%s** to inventory for **%s** points.' % (self.item_type, self.item_name, 15)
+        return msg
+
+    def cancel(self):
+        BotRequest.cancel(self)
+        return 'Cancelled request to sell %s %s.' % (self.item_type, self.item_name)
 
 
 class BotRequestException(Exception):

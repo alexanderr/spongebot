@@ -11,19 +11,20 @@ class RequestManager:
 
     def confirm_request(self, user_id):
         try:
-            self.user_requests[user_id].confirm(self.bot.userdb)
+            return self.user_requests[user_id].confirm()
         except KeyError:
             raise BotRequestException('No request to confirm.')
 
     def cancel_request(self, user_id):
         try:
-            self.user_requests[user_id].cancel()
+            msg = self.user_requests[user_id].cancel()
             del self.user_requests[user_id]
+            return msg
         except KeyError:
             raise BotRequestException('No request to cancel.')
 
     def undo_request(self, user_id):
         try:
-            self.user_requests[user_id].undo()
+            return self.user_requests[user_id].undo()
         except KeyError:
             raise BotRequestException('No request to undo.')
