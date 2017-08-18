@@ -78,9 +78,9 @@ class SpongebotUser:
         self.__dict__.update(document)
         undocumented_inventory = []
         for doc in self.inventory:
-            if doc['type'] == 'frame':
+            if doc['item_type'] == 'frame':
                 item = FrameInventoryItem(0, 0, 0, 0, 0)
-            elif doc['type'] == 'voiceline':
+            elif doc['item_type'] == 'voiceline':
                 item = VoicelineInventoryItem(0, 0, 0, 0, 0)
             else:
                 # Bad inventory; reset
