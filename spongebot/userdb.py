@@ -62,9 +62,39 @@ class SpongebotUser:
         self.voiceline_id = 0
         self.episodes_watched = 0
         self.episode_list = []
+        self.inventory = []
+        self.last_sold_item = None
 
     def as_document(self):
         return self.__dict__
 
     def from_document(self, document):
         self.__dict__.update(document)
+
+
+class InventoryItem:
+    def __init__(self, type, date_received):
+        self.type = type
+        self.date_received = date_received
+
+    def as_document(self):
+        return self.__dict__
+
+    def from_document(self, document):
+        self.__dict__.update(document)
+
+
+class FrameInventoryItem(InventoryItem):
+    def __init__(self, type, date_received, name, idx, from_episode):
+        InventoryItem.__init__(self, type, date_received)
+        self.name = name
+        self.idx = idx
+        self.from_episode = from_episode
+
+
+class VoicelineInventoryItem(InventoryItem):
+    def __init__(self, type, date_received, name, idx, from_episode):
+        InventoryItem.__init__(self, type, date_received)
+        self.name = name
+        self.idx = idx
+        self.from_episode = from_episode

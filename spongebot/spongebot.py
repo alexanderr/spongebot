@@ -8,6 +8,7 @@ from discord.client import Client
 
 from spongebot.commandmanager import CommandManager
 from spongebot.cratemanager import CrateManager
+from spongebot.requestmanager import RequestManager
 from spongebot.userdb import UserMongoDB
 
 
@@ -29,6 +30,7 @@ class Spongebot(Client):
         self.command_manager = CommandManager(self)
         self.userdb = UserMongoDB(self)
         self.crate_manager = CrateManager(self)
+        self.request_manager = RequestManager(self)
 
     def setup_logging(self):
         self.logger = logging.getLogger('spongebot')

@@ -3,6 +3,7 @@ import datetime
 import os
 
 from spongebot.constants import RANKS
+from spongebot.botrequest import SellRequest, BotRequestException
 
 
 # Context
@@ -235,7 +236,7 @@ class CommandManager:
         await self.bot.send_message(source.channel, nmessage)
 
     @command(context=PUBLIC, access=USER, types=(int,))
-    async def c_voiceline(self, source, index):
+    async def c_voiceline(self, source, name):
         vldir = os.path.join('voicelines', source.author.id)
         if not os.path.isdir(vldir):
             await self.bot.send_message(source.channel,
@@ -250,12 +251,25 @@ class CommandManager:
             await self.bot.send_message(source.channel, "```An episode is playing! Wait until it is over.```")
             return
 
+        # Get the user data
+        user = self.bot.userdb.get(source.author.id)
+        if user is None or len(user.inventory) == 0:
+            await self.bot.send_message(source.channel, '```You do not own any voicelines.```')
+
+        # Get the voice line from the name
         try:
-            fpath = os.path.join(vldir, str(index) + '.wav')
+            voiceline = [item for item in user.inventory if item.name == name and item.type == 'voiceline'][0]
+        except IndexError:
+            await self.bot.send_message(source.channel, '```Invalid voiceline specified.```')
+            return
+
+        # Check if we have this voiceline in our file system
+        try:
+            fpath = os.path.join(vldir, str(voiceline.idx) + '.wav')
             if not os.path.isfile(fpath):
                 raise IOError
         except IOError:
-            await self.bot.send_message(source.channel, '```Invalid index specified.```')
+            await self.bot.send_message(source.channel, '```Failed to find voiceline.```')
         else:
             channel = source.author.voice.voice_channel
             if not channel:
@@ -279,14 +293,27 @@ class CommandManager:
         await self.bot.crate_manager.generate_crate(source)
 
     @command(context=PRIVATE, access=USER, types=(int,))
-    async def c_gallery(self, source, index):
+    async def c_gallery(self, source, name):
         framedir = os.path.join('frames', source.author.id)
         if not os.path.isdir(framedir):
             await self.bot.send_message(source.channel, '```You have no frames yet! Try opening some crates!```')
             return
 
+        # Get the user data
+        user = self.bot.userdb.get(source.author.id)
+        if user is None or len(user.inventory) == 0:
+            await self.bot.send_message(source.channel, '```You do not own any frames.```')
+
+        # Get the voice line from the name
         try:
-            fpath = os.path.join(framedir, str(index) + '.png')
+            frame = [item for item in user.inventory if item.name == name and item.type == 'frame'][0]
+        except IndexError:
+            await self.bot.send_message(source.channel, '```Invalid frame specified.```')
+            return
+
+        # Check if the frame is in our file system
+        try:
+            fpath = os.path.join(framedir, str(frame.idx) + '.png')
             f = open(fpath, 'rb')
         except IOError:
             await self.bot.send_message(source.channel, '```Invalid index specified.```')
@@ -298,6 +325,59 @@ class CommandManager:
             await self.bot.send_file(source.channel, f)
 
             f.close()
+
+    @command(context=PRIVATE, access=USER, types=(str, str))
+    async def c_sell(self, source, type, name):
+        if type == 'frame' or type == 'voiceline':
+            self.bot.request_manager.create_request(SellRequest(source.author.id, self.bot, type, name))
+        else:
+            await self.bot.send_message(
+                source.channel, '```Are you sure you want to sell %s %s? ($confirm or $cancel)```' % type, name)
+
+    @command(context=PRIVATE, access=USER, types=())
+    async def c_confirm(self, source):
+        try:
+            self.bot.request_manager.confirm_request(source.author.id)
+        except BotRequestException as e:
+            await self.bot.send_message(source.channel, '```%s```' % e.message)
+
+    @command(context=PRIVATE, access=USER, types=())
+    async def c_cancel(self, source):
+        try:
+            self.bot.request_manager.cancel_request(source.author.id)
+        except BotRequestException as e:
+            await self.bot.send_message(source.channel, '```%s```' % e.message)
+
+    @command(context=PRIVATE, access=USER, types=())
+    async def c_undo(self, source):
+        try:
+            self.bot.request_manager.undo_request(source.author.id)
+        except BotRequestException as e:
+            await self.bot.send_message(source.channel, '```%s```' % e.message)
+
+    @command(context=PRIVATE, access=USER, types=(str, str, str))
+    async def c_rename(self, source, type, from_name, to_name):
+        # Get the user data
+        user = self.bot.userdb.get(source.author.id)
+        if user is None or len(user.inventory) == 0:
+            await self.bot.send_message(source.channel, '```You do not own any items to rename.```')
+
+        # Get the voice line from the name
+        try:
+            item_to_rename = [item for item in user.inventory if item.name == from_name and item.type == type][0]
+        except IndexError:
+            await self.bot.send_message(source.channel, '```You do not own a %s named %s.```' % (type, from_name))
+            return
+
+        # Rename item
+        item_idx = user.inventory.index(item_to_rename)
+        item_to_rename.name = to_name
+        user.inventory[item_idx] = item_to_rename
+        # Update user in the database
+        self.bot.userdb.update({'$set': user.as_document()})
+        await self.bot.send_message(
+            source.channel, '```Successfully renamed %s from %s to %s.```' % (type, from_name, to_name))
+
 
     async def invalid_arguments(self, source, command_name):
         await self.bot.send_message(source.channel, '```Invalid arguments to command %s.```' % command_name)

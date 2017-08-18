@@ -4,6 +4,7 @@ import asyncio
 
 from spongebot.crate import FrameCrate, VoicelineCrate
 from spongebot.constants import CRATE_PRICE
+from spongebot.userdb import FrameInventoryItem, VoicelineInventoryItem
 
 
 class CrateManager:
@@ -68,18 +69,28 @@ class CrateManager:
         while not self.bot.is_closed:
             if len(self.generated_crate_queue):
                 crate = self.generated_crate_queue.pop(0)
+                # Get user's db data
+                user = self.bot.userdb.get(crate.user_id)
 
                 self.bot.log('Delivering crate for %s...' % crate.user_id)
 
                 await self.bot.send_message(crate.channel, '```Crate opened!```')
 
                 if isinstance(crate, FrameCrate):
+                    # Add crate item to user inventory
+                    user.inventory.append(FrameInventoryItem(type, time.time(), crate.crate_id, crate.crate_id, crate.episode))
+                    # Update user db
+                    self.bot.userdb.update(crate.user_id, {'$set': user.as_document()})
                     await self.bot.send_message(crate.channel, '```You got a Frame Crate!```')
 
                     with open(crate.frame, 'rb') as fb:
                         await self.bot.send_file(crate.channel, fb)
 
                 elif isinstance(crate, VoicelineCrate):
+                    # Add crate item to user inventory
+                    user.inventory.append(VoicelineInventoryItem(type, time.time(), crate.crate_id, crate.crate_id, crate.episode))
+                    # Update user db
+                    self.bot.userdb.update(crate.user_id, {'$set': user.as_document()})
                     await self.bot.send_message(crate.channel, '```You got a Voiceline Crate!```')
                     await self.bot.send_message(
                         crate.channel,
