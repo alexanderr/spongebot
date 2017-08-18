@@ -258,7 +258,7 @@ class CommandManager:
 
         # Get the voice line from the name
         try:
-            voiceline = [item for item in user.inventory if item.name == name and item.type == 'voiceline'][0]
+            voiceline = [item for item in user.inventory if item.name == name and item.item_type == 'voiceline'][0]
         except IndexError:
             await self.bot.send_message(source.channel, '```Invalid voiceline specified.```')
             return
@@ -306,7 +306,7 @@ class CommandManager:
 
         # Get the voice line from the name
         try:
-            frame = [item for item in user.inventory if item.name == name and item.type == 'frame'][0]
+            frame = [item for item in user.inventory if item.name == name and item.item_type == 'frame'][0]
         except IndexError:
             await self.bot.send_message(source.channel, '```Invalid frame specified.```')
             return

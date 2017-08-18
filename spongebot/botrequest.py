@@ -39,7 +39,7 @@ class SellRequest(BotRequest):
         data = self.bot.userdb.get(self.requester)
         if data is None or len(data.inventory) == 0:
             raise BotRequestException('No items to sell.')
-        item = [item for item in data.inventory if item.type == self.item_type and item.name == self.item_name][0]
+        item = [item for item in data.inventory if item.item_type == self.item_type and item.name == self.item_name][0]
         # Remove item from inventory
         data.inventory.remove(item)
         # Put item_id in sold items
