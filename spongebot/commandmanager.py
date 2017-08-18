@@ -235,7 +235,7 @@ class CommandManager:
 
         await self.bot.send_message(source.channel, nmessage)
 
-    @command(context=PUBLIC, access=USER, types=(int,))
+    @command(context=PUBLIC, access=USER, types=(str,))
     async def c_voiceline(self, source, name):
         vldir = os.path.join('voicelines', source.author.id)
         if not os.path.isdir(vldir):
