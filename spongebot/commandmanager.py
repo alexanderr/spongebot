@@ -327,12 +327,12 @@ class CommandManager:
             f.close()
 
     @command(context=PRIVATE, access=USER, types=(str, str))
-    async def c_sell(self, source, type, name):
-        if type == 'frame' or type == 'voiceline':
-            self.bot.request_manager.create_request(SellRequest(source.author.id, self.bot, type, name))
+    async def c_sell(self, source, item_type, name):
+        if item_type == 'frame' or item_type == 'voiceline':
+            self.bot.request_manager.create_request(SellRequest(source.author.id, self.bot, item_type, name))
         else:
             await self.bot.send_message(
-                source.channel, '```Are you sure you want to sell %s %s? ($confirm or $cancel)```' % type, name)
+                source.channel, '```Are you sure you want to sell %s %s? ($confirm or $cancel)```' % item_type, name)
 
     @command(context=PRIVATE, access=USER, types=())
     async def c_confirm(self, source):
@@ -356,7 +356,7 @@ class CommandManager:
             await self.bot.send_message(source.channel, '```%s```' % e.message)
 
     @command(context=PRIVATE, access=USER, types=(str, str, str))
-    async def c_rename(self, source, type, from_name, to_name):
+    async def c_rename(self, source, item_type, from_name, to_name):
         # Get the user data
         user = self.bot.userdb.get(source.author.id)
         if user is None or len(user.inventory) == 0:
@@ -381,12 +381,12 @@ class CommandManager:
         item_to_rename.name = to_name
         user.inventory[item_idx] = item_to_rename
         # Update user in the database
-        self.bot.userdb.update({'$set': user.as_document()})
+        self.bot.userdb.update(user, {'$set': user.as_document()})
         await self.bot.send_message(
-            source.channel, '```Successfully renamed %s from %s to %s.```' % (type, from_name, to_name))
+            source.channel, '```Successfully renamed %s from %s to %s.```' % (item_type, from_name, to_name))
 
     @command(context=BOTH, access=ADMIN, types=(str, int, int))
-    async def c_points(self, source, type, amount, target_id):
+    async def c_points(self, source, t_type, amount, target_id):
         # Get the user data
         if target_id == 0:
             target_id = source.author.id
@@ -396,11 +396,11 @@ class CommandManager:
             await self.bot.send_message(source.channel, '```Invalid user.```')
             return
 
-        if type == 'add':
+        if t_type == 'add':
             user.total_points += amount
             user.current_points += amount
             await self.bot.send_message(source.channel, 'Adding %s point(s) to **%s**.' % (amount, source.author.name))
-        elif type == 'remove':
+        elif t_type == 'remove':
             user.total_points -= amount
             user.current_points -= amount
             await self.bot.send_message(source.channel, 'Removing %s point(s) from **%s**.' % (amount, source.author.name))
