@@ -53,11 +53,17 @@ class SellRequest(BotRequest):
     def undo(self):
         BotRequest.undo(self)
         # Get last sold item
+        renamed = False
         data = self.bot.userdb.get(self.requester)
         if data is None or data.current_points < 15:
             # Cannot purchase that item back
             raise BotRequestException('Not enough funds.')
         item = data.last_sold_item
+        # Check if an item by the name exists now
+        if item.name in [other_item.name for other_item in data.inventory if other_item.name == item.name]:
+            # Rename this to the index
+            renamed = True
+            item.name = str(item.idx)
         # Add item back to inventory
         data.inventory.add(item)
         # Remove item_id from last sold item
@@ -67,6 +73,8 @@ class SellRequest(BotRequest):
         # Update user entry
         self.bot.userdb.update(self.requester, {'$set': data.as_document()})
         msg = 'Returned **%s** **%s** to inventory for **%s** points.' % (self.item_type, self.item_name, 15)
+        if renamed:
+            msg += '\nHowever, the %s was renamed to %s to avoid naming conflicts.' % (self.item_type, item.name)
         return msg
 
     def cancel(self):
