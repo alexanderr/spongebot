@@ -78,7 +78,9 @@ class CrateManager:
 
                 if isinstance(crate, FrameCrate):
                     # Add crate item to user inventory
-                    user.inventory.append(FrameInventoryItem('frame', time.time(), str(crate.crate_id), crate.crate_id, crate.episode))
+                    item = FrameInventoryItem(
+                        'frame', int(time.time()), str(crate.crate_id), crate.crate_id, crate.episode)
+                    user.inventory.append(item)
                     # Update user db
                     self.bot.userdb.update(crate.user_id, {'$set': user.as_document()})
                     await self.bot.send_message(crate.channel, '```You got a Frame Crate!```')
@@ -88,7 +90,9 @@ class CrateManager:
 
                 elif isinstance(crate, VoicelineCrate):
                     # Add crate item to user inventory
-                    user.inventory.append(VoicelineInventoryItem('voiceline', time.time(), str(crate.crate_id), crate.crate_id, crate.episode))
+                    item = VoicelineInventoryItem(
+                        'voiceline', int(time.time()), str(crate.crate_id), crate.crate_id, crate.episode)
+                    user.inventory.append(item)
                     # Update user db
                     self.bot.userdb.update(crate.user_id, {'$set': user.as_document()})
                     await self.bot.send_message(crate.channel, '```You got a Voiceline Crate!```')
