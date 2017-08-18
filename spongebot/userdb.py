@@ -87,16 +87,16 @@ class InventoryItem:
 
 
 class FrameInventoryItem(InventoryItem):
-    def __init__(self, type, date_received, name, idx, from_episode):
-        InventoryItem.__init__(self, type, date_received)
+    def __init__(self, item_type, date_received, name, idx, from_episode):
+        InventoryItem.__init__(self, item_type, date_received)
         self.name = name
         self.idx = idx
         self.from_episode = from_episode
 
 
 class VoicelineInventoryItem(InventoryItem):
-    def __init__(self, type, date_received, name, idx, from_episode):
-        InventoryItem.__init__(self, type, date_received)
+    def __init__(self, item_type, date_received, name, idx, from_episode):
+        InventoryItem.__init__(self, item_type, date_received)
         self.name = name
         self.idx = idx
         self.from_episode = from_episode
