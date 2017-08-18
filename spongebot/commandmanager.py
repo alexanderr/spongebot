@@ -340,6 +340,7 @@ class CommandManager:
     async def c_confirm(self, source):
         try:
             msg = self.bot.request_manager.confirm_request(source.author.id)
+            msg = '```%s```' % msg
             await self.bot.send_message(source.channel, msg)
         except BotRequestException as e:
             await self.bot.send_message(source.channel, '```%s```' % e.message)
@@ -348,6 +349,7 @@ class CommandManager:
     async def c_cancel(self, source):
         try:
             msg = self.bot.request_manager.cancel_request(source.author.id)
+            msg = '```%s```' % msg
             await self.bot.send_message(source.channel, msg)
         except BotRequestException as e:
             await self.bot.send_message(source.channel, '```%s```' % e.message)
@@ -356,6 +358,7 @@ class CommandManager:
     async def c_undo(self, source):
         try:
             msg = self.bot.request_manager.undo_request(source.author.id)
+            msg = '```%s```' % msg
             await self.bot.send_message(source.channel, msg)
         except BotRequestException as e:
             await self.bot.send_message(source.channel, '```%s```' % e.message)
@@ -405,13 +408,13 @@ class CommandManager:
         if t_type == 'add':
             user.total_points += amount
             user.current_points += amount
-            await self.bot.send_message(source.channel, 'Adding %s point(s) to **%s**.' % (amount, source.author.name))
+            await self.bot.send_message(source.channel, '```Adding %s point(s) to %s.```' % (amount, source.author.name))
         elif t_type == 'remove':
             user.total_points -= amount
             user.current_points -= amount
-            await self.bot.send_message(source.channel, 'Removing %s point(s) from **%s**.' % (amount, source.author.name))
+            await self.bot.send_message(source.channel, '```Removing %s point(s) from %s.```' % (amount, source.author.name))
         else:
-            await self.bot.send_message(source.channel, 'Invalid use of **points** command.')
+            await self.bot.send_message(source.channel, '```Invalid use of points command.```')
             return
 
         self.bot.userdb.update(user, {'$set': user.as_document()})

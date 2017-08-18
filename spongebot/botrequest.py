@@ -48,7 +48,7 @@ class SellRequest(BotRequest):
         data.current_points += 15
         # Update user entry
         self.bot.userdb.update(self.requester, {'$set': data.as_document()})
-        return 'Successfully sold sold **%s** **%s** for **%s** points.' % (self.item_type, self.item_name, 15)
+        return 'Successfully sold sold %s %s for %s points.' % (self.item_type, self.item_name, 15)
 
     def undo(self):
         BotRequest.undo(self)
@@ -72,7 +72,7 @@ class SellRequest(BotRequest):
         data.current_points -= 15
         # Update user entry
         self.bot.userdb.update(self.requester, {'$set': data.as_document()})
-        msg = 'Returned **%s** **%s** to inventory for **%s** points.' % (self.item_type, self.item_name, 15)
+        msg = 'Returned %s %s to inventory for %s points.' % (self.item_type, self.item_name, 15)
         if renamed:
             msg += '\nHowever, the %s was renamed to %s to avoid naming conflicts.' % (self.item_type, item.name)
         return msg
