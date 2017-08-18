@@ -385,12 +385,10 @@ class CommandManager:
         await self.bot.send_message(
             source.channel, '```Successfully renamed %s from %s to %s.```' % (item_type, from_name, to_name))
 
-    @command(context=BOTH, access=ADMIN, types=(str, int, int))
-    async def c_points(self, source, t_type, amount, target_id):
+    @command(context=BOTH, access=ADMIN, types=(str, int))
+    async def c_points(self, source, t_type, amount):
         # Get the user data
-        if target_id == 0:
-            target_id = source.author.id
-        user = self.bot.userdb.get(target_id)
+        user = self.bot.userdb.get(source.author.id)
 
         if user is None:
             await self.bot.send_message(source.channel, '```Invalid user.```')
@@ -409,7 +407,6 @@ class CommandManager:
             return
 
         self.bot.userdb.update(user, {'$set': user.as_document()})
-
 
     async def invalid_arguments(self, source, command_name):
         await self.bot.send_message(source.channel, '```Invalid arguments to command %s.```' % command_name)
