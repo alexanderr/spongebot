@@ -7,7 +7,7 @@ from discord.user import User
 def get_user_id(user):
     if isinstance(user, User) or issubclass(user.__class__, User):
         return user.id
-    if isinstance(user, SpongebotUser):
+    elif isinstance(user, SpongebotUser):
         return user.as_document()['_id']
     else:
         return user
