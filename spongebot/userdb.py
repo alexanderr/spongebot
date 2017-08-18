@@ -42,7 +42,6 @@ class UserMongoDB:
         return spongebot_user
 
     def update(self, user, new):
-        print('Updating %s to %s' % (user, new))
         user_id = get_user_id(user)
         self.userdb.update_one({'_id': user_id}, new)
 
