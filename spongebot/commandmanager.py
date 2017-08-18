@@ -329,6 +329,12 @@ class CommandManager:
     @command(context=PRIVATE, access=USER, types=(str, str))
     async def c_sell(self, source, item_type, name):
         if item_type == 'frame' or item_type == 'voiceline':
+            user_data = self.bot.userdb.get(source.author)
+            if len([item for item in user_data.inventory if item.item_type == item_type and item.name == name]) == 0:
+                await self.bot.send_message(
+                    source.channel, '```You do not own a %s named %s to sell.```' % (item_type, name))
+                return
+
             self.bot.request_manager.create_request(SellRequest(source.author.id, self.bot, item_type, name))
             await self.bot.send_message(
                 source.channel, '```Are you sure you want to sell %s %s? ($confirm or $cancel)```' % (item_type, name))
