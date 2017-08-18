@@ -292,7 +292,7 @@ class CommandManager:
     async def c_opencrate(self, source):
         await self.bot.crate_manager.generate_crate(source)
 
-    @command(context=PRIVATE, access=USER, types=(int,))
+    @command(context=PRIVATE, access=USER, types=(str,))
     async def c_gallery(self, source, name):
         framedir = os.path.join('frames', source.author.id)
         if not os.path.isdir(framedir):
