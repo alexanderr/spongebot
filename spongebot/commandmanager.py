@@ -378,6 +378,31 @@ class CommandManager:
         await self.bot.send_message(
             source.channel, '```Successfully renamed %s from %s to %s.```' % (type, from_name, to_name))
 
+    @command(context=BOTH, access=ADMIN, types=(str, int, int))
+    async def c_points(self, source, type, amount, target_id):
+        # Get the user data
+        if target_id == 0:
+            target_id = source.author.id
+        user = self.bot.userdb.get(target_id)
+
+        if user is None:
+            await self.bot.send_message(source.channel, '```Invalid user.```')
+            return
+
+        if type == 'add':
+            user.total_points += amount
+            user.current_points += amount
+            await self.bot.send_message(source.channel, 'Adding %s point(s) to **%s**.' % (amount, source.author.name))
+        elif type == 'remove':
+            user.total_points -= amount
+            user.current_points -= amount
+            await self.bot.send_message(source.channel, 'Removing %s point(s) from **%s**.' % (amount, source.author.name))
+        else:
+            await self.bot.send_message(source.channel, 'Invalid use of **points** command.')
+            return
+
+        self.bot.userdb.update(user, {'$set': user.as_document()})
+
 
     async def invalid_arguments(self, source, command_name):
         await self.bot.send_message(source.channel, '```Invalid arguments to command %s.```' % command_name)
