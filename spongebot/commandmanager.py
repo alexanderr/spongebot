@@ -365,9 +365,15 @@ class CommandManager:
 
         # Get the voice line from the name
         try:
-            item_to_rename = [item for item in user.inventory if item.name == from_name and item.type == type][0]
+            item_to_rename = [item for item in user.inventory if item.name == from_name and item.item_type == item_type][0]
         except IndexError:
-            await self.bot.send_message(source.channel, '```You do not own a %s named %s.```' % (type, from_name))
+            await self.bot.send_message(source.channel, '```You do not own a %s named %s.```' % (item_type, from_name))
+            return
+
+        items_with_name = [item for item in user.inventory if item.name == to_name and item.item_type == item_type]
+        if len(items_with_name) != 0:
+            # Cannot have multiple items of the same types with similar names
+            await self.bot.send_message(source.channel, '```You already have a %s named %s.```' % (item_type, to_name))
             return
 
         # Rename item
