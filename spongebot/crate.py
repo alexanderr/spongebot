@@ -33,25 +33,26 @@ class FrameCrate(Crate):
         self.channel = channel
         self.crate_id = 0
         self.user_id = user_id
+        self.episode = ''
 
     def generate(self, crate_manager):
-        episode = random.choice(self.get_video_filenames())
+        self.episode = random.choice(self.get_video_filenames())
 
         # too lazy to have ffmpeg read the whole file for the length.
-        if episode.lower() == 's1e01c':
+        if self.episode.lower() == 's1e01c':
             # Special case: this episode is 3 mins long.
             t = random.randint(5, (60 * 3) - 10)
-        elif episode.lower() == 's2e11b':
+        elif self.episode.lower() == 's2e11b':
             # 6 mins
             t = random.randint(5, (60 * 6) - 10)
-        elif episode.lower() == 's2e05a':
+        elif self.episode.lower() == 's2e05a':
             # 20 mins
             t = random.randint(5, (60 * 20) - 10)
         else:
             # 11 mins usually
             t = random.randint(5, self.LENGTH)
 
-        inpath = os.path.join('content', episode)
+        inpath = os.path.join('content', self.episode)
 
         directory = os.path.join('frames', self.user_id)
 
@@ -74,12 +75,13 @@ class VoicelineCrate(Crate):
         self.channel = channel
         self.crate_id = 0
         self.user_id = user_id
+        self.episode = ''
         self.type = 0
 
     def generate(self, crate_manager):
-        episode = random.choice(self.get_video_filenames())
+        self.episode = random.choice(self.get_video_filenames())
 
-        inpath = os.path.join('content', episode)
+        inpath = os.path.join('content', self.episode)
 
         audio = AudioSegment.from_file(inpath, 'avi')
 

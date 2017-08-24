@@ -3,6 +3,7 @@ import datetime
 import os
 
 from spongebot.constants import RANKS
+from spongebot.botrequest import SellRequest, BotRequestException
 
 
 # Context
@@ -235,8 +236,8 @@ class CommandManager:
 
         await self.bot.send_message(source.channel, nmessage)
 
-    @command(context=PUBLIC, access=USER, types=(int,))
-    async def c_voiceline(self, source, index):
+    @command(context=PUBLIC, access=USER, types=(str,))
+    async def c_voiceline(self, source, name):
         vldir = os.path.join('voicelines', source.author.id)
         if not os.path.isdir(vldir):
             await self.bot.send_message(source.channel,
@@ -251,12 +252,25 @@ class CommandManager:
             await self.bot.send_message(source.channel, "```An episode is playing! Wait until it is over.```")
             return
 
+        # Get the user data
+        user = self.bot.userdb.get(source.author.id)
+        if user is None or len(user.inventory) == 0:
+            await self.bot.send_message(source.channel, '```You do not own any voicelines.```')
+
+        # Get the voice line from the name
         try:
-            fpath = os.path.join(vldir, str(index) + '.wav')
+            voiceline = [item for item in user.inventory if item.name == name and item.item_type == 'voiceline'][0]
+        except IndexError:
+            await self.bot.send_message(source.channel, '```Invalid voiceline specified.```')
+            return
+
+        # Check if we have this voiceline in our file system
+        try:
+            fpath = os.path.join(vldir, str(voiceline.idx) + '.wav')
             if not os.path.isfile(fpath):
                 raise IOError
         except IOError:
-            await self.bot.send_message(source.channel, '```Invalid index specified.```')
+            await self.bot.send_message(source.channel, '```Failed to find voiceline.```')
         else:
             channel = source.author.voice.voice_channel
             if not channel:
@@ -279,15 +293,28 @@ class CommandManager:
     async def c_opencrate(self, source):
         await self.bot.crate_manager.generate_crate(source)
 
-    @command(context=PRIVATE, access=USER, types=(int,))
-    async def c_gallery(self, source, index):
+    @command(context=PRIVATE, access=USER, types=(str,))
+    async def c_gallery(self, source, name):
         framedir = os.path.join('frames', source.author.id)
         if not os.path.isdir(framedir):
             await self.bot.send_message(source.channel, '```You have no frames yet! Try opening some crates!```')
             return
 
+        # Get the user data
+        user = self.bot.userdb.get(source.author.id)
+        if user is None or len(user.inventory) == 0:
+            await self.bot.send_message(source.channel, '```You do not own any frames.```')
+
+        # Get the frame from the name
         try:
-            fpath = os.path.join(framedir, str(index) + '.png')
+            frame = [item for item in user.inventory if item.name == name and item.item_type == 'frame'][0]
+        except IndexError:
+            await self.bot.send_message(source.channel, '```Invalid frame specified.```')
+            return
+
+        # Check if the frame is in our file system
+        try:
+            fpath = os.path.join(framedir, str(frame.idx) + '.png')
             f = open(fpath, 'rb')
         except IOError:
             await self.bot.send_message(source.channel, '```Invalid index specified.```')
@@ -299,6 +326,109 @@ class CommandManager:
             await self.bot.send_file(source.channel, f)
 
             f.close()
+
+    @command(context=PRIVATE, access=USER, types=(str, str))
+    async def c_sell(self, source, item_type, name):
+        if item_type == 'frame' or item_type == 'voiceline':
+            user_data = self.bot.userdb.get(source.author)
+            if user_data is None:
+                await self.bot.send_message(
+                    source.channel, '```You do not own a %s named %s to sell.```' % (item_type, name))
+                return
+            if len([item for item in user_data.inventory if item.item_type == item_type and item.name == name]) == 0:
+                await self.bot.send_message(
+                    source.channel, '```You do not own a %s named %s to sell.```' % (item_type, name))
+                return
+
+            self.bot.request_manager.create_request(SellRequest(source.author.id, self.bot, item_type, name))
+            await self.bot.send_message(
+                source.channel, '```Are you sure you want to sell %s %s? ($confirm or $cancel)```' % (item_type, name))
+        else:
+            await self.bot.send_message(
+                source.channel, '```Invalid use of command "sell"```')
+
+    @command(context=PRIVATE, access=USER, types=())
+    async def c_confirm(self, source):
+        try:
+            msg = self.bot.request_manager.confirm_request(source.author.id)
+            msg = '```%s```' % msg
+            await self.bot.send_message(source.channel, msg)
+        except BotRequestException as e:
+            await self.bot.send_message(source.channel, '```%s```' % e.message)
+
+    @command(context=PRIVATE, access=USER, types=())
+    async def c_cancel(self, source):
+        try:
+            msg = self.bot.request_manager.cancel_request(source.author.id)
+            msg = '```%s```' % msg
+            await self.bot.send_message(source.channel, msg)
+        except BotRequestException as e:
+            await self.bot.send_message(source.channel, '```%s```' % e.message)
+
+    @command(context=PRIVATE, access=USER, types=())
+    async def c_undo(self, source):
+        try:
+            msg = self.bot.request_manager.undo_request(source.author.id)
+            msg = '```%s```' % msg
+            await self.bot.send_message(source.channel, msg)
+        except BotRequestException as e:
+            await self.bot.send_message(source.channel, '```%s```' % e.message)
+
+    @command(context=PRIVATE, access=USER, types=(str, str, str))
+    async def c_rename(self, source, item_type, from_name, to_name):
+        # Get the user data
+        user = self.bot.userdb.get(source.author.id)
+        if user is None or len(user.inventory) == 0:
+            await self.bot.send_message(source.channel, '```You do not own any items to rename.```')
+            return
+        if to_name.isdigit():
+            await self.bot.send_message(source.channel, '```Please choose a different name; digits are reserved.```')
+            return
+
+        # Get the voice line from the name
+        try:
+            item_to_rename = [item for item in user.inventory if item.name == from_name and item.item_type == item_type][0]
+        except IndexError:
+            await self.bot.send_message(source.channel, '```You do not own a %s named %s.```' % (item_type, from_name))
+            return
+
+        items_with_name = [item for item in user.inventory if item.name == to_name and item.item_type == item_type]
+        if len(items_with_name) != 0:
+            # Cannot have multiple items of the same types with similar names
+            await self.bot.send_message(source.channel, '```You already have a %s named %s.```' % (item_type, to_name))
+            return
+
+        # Rename item
+        item_idx = user.inventory.index(item_to_rename)
+        item_to_rename.name = to_name
+        user.inventory[item_idx] = item_to_rename
+        # Update user in the database
+        self.bot.userdb.update(user, {'$set': user.as_document()})
+        await self.bot.send_message(
+            source.channel, '```Successfully renamed %s from %s to %s.```' % (item_type, from_name, to_name))
+
+    @command(context=BOTH, access=ADMIN, types=(str, int))
+    async def c_points(self, source, t_type, amount):
+        # Get the user data
+        user = self.bot.userdb.get(source.author.id)
+
+        if user is None:
+            await self.bot.send_message(source.channel, '```Invalid user.```')
+            return
+
+        if t_type == 'add':
+            user.total_points += amount
+            user.current_points += amount
+            await self.bot.send_message(source.channel, '```Adding %s point(s) to %s.```' % (amount, source.author.name))
+        elif t_type == 'remove':
+            user.total_points = max(0, user.total_points - amount)
+            user.current_points = max(0, user.current_points - amount)
+            await self.bot.send_message(source.channel, '```Removing %s point(s) from %s.```' % (amount, source.author.name))
+        else:
+            await self.bot.send_message(source.channel, '```Invalid use of points command.```')
+            return
+
+        self.bot.userdb.update(user, {'$set': user.as_document()})
 
     async def invalid_arguments(self, source, command_name):
         await self.bot.send_message(source.channel, '```Invalid arguments to command %s.```' % command_name)
