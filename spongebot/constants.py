@@ -1,4 +1,4 @@
-CRATE_PRICE = 30
+CRATE_PRICE = 20
 
 
 RANKS = {

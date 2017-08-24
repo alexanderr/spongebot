@@ -91,11 +91,11 @@ class CommandManager:
             now = datetime.datetime.now()
             night_hours = (20, 21, 22, 23, 24, 1, 2, 3, 4, 5)  # 8pm to 5am
             if now.hour in night_hours:
-                player = voice.create_ffmpeg_player('night.wav')
-                player.start()
+                self.bot.voiceline_player = voice.create_ffmpeg_player('night.wav')
+                self.bot.voiceline_player.start()
 
-        player = voice.create_ffmpeg_player('ready.wav', after=after)
-        player.start()
+        self.bot.voiceline_player = voice.create_ffmpeg_player('ready.wav', after=after)
+        self.bot.voiceline_player.start()
 
     @command(context=PUBLIC, access=ADMIN, types=(str,))
     async def c_joinchannel(self, source, channelId):
