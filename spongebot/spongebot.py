@@ -127,6 +127,9 @@ class Spongebot(Client):
             future = asyncio.ensure_future(coro, loop=self.loop)
             future.result()
 
+        if self.voiceline_player is not None and not self.voiceline_player.is_done():
+            self.voiceline_player.stop()
+
         if self.episode_player is None or self.episode_player.is_done():
             self.episode_player = voice.create_ffmpeg_player(self.current_episode.path, after=after)
             self.episode_player.start()

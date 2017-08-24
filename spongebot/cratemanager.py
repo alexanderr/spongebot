@@ -20,11 +20,11 @@ class CrateManager:
     async def generate_crate(self, source):
         data = self.bot.userdb.get(source.author)
         if data is None:
-            await self.bot.send_message(source.channel, '```You need at least 30 points to open a crate.```')
+            await self.bot.send_message(source.channel, '```You need at least %d points to open a crate.```' % CRATE_PRICE)
             return
 
         if data.current_points < CRATE_PRICE:
-            await self.bot.send_message(source.channel, '```You need at least 30 points to open a crate.```')
+            await self.bot.send_message(source.channel, '```You need at least %d points to open a crate.```' % CRATE_PRICE)
             return
 
         self.bot.log('Generating crate type...')
@@ -39,7 +39,7 @@ class CrateManager:
             crate = FrameCrate(source.author.id, source.channel)
             crate_field = 'frame_id'
 
-        self.bot.userdb.update(source.author, {'$inc': {'crates_opened': 1, 'current_points': -30, crate_field: 1}})
+        self.bot.userdb.update(source.author, {'$inc': {'crates_opened': 1, 'current_points': -CRATE_PRICE, crate_field: 1}})
 
         data = self.bot.userdb.get(source.author)
 
@@ -55,7 +55,10 @@ class CrateManager:
         self.crate_queue.append(crate)
 
     async def generate_crate_task(self):
-        while not self.bot.is_closed:
+        while True:
+            if self.bot.is_closed:
+                await asyncio.sleep(1, loop=self.bot.loop)
+                continue
             if len(self.crate_queue):
                 crate = self.crate_queue.pop(0)
                 self.bot.log('Generating crate for %s...' % crate.user_id)
@@ -66,7 +69,10 @@ class CrateManager:
             await asyncio.sleep(1, loop=self.bot.loop)
 
     async def deliver_crate_task(self):
-        while not self.bot.is_closed:
+        while True:
+            if self.bot.is_closed:
+                await asyncio.sleep(1, loop=self.bot.loop)
+                continue
             if len(self.generated_crate_queue):
                 crate = self.generated_crate_queue.pop(0)
                 # Get user's db data
@@ -95,7 +101,14 @@ class CrateManager:
                     user.inventory.append(item)
                     # Update user db
                     self.bot.userdb.update(crate.user_id, {'$set': user.as_document()})
-                    await self.bot.send_message(crate.channel, '```You got a Voiceline Crate!```')
+                    if crate.type == 3:
+                        name = 'Long Voiceline Crate'
+                    elif crate.type == 2:
+                        name = 'Medium Voiceline Crate'
+                    else:
+                        name = 'Short Voiceline Crate'
+
+                    await self.bot.send_message(crate.channel, '```You got a %s!```' % name)
                     await self.bot.send_message(
                         crate.channel,
                         'You can play your new voiceline by using the ```$voiceline %d``` command in the server chat.'

@@ -28,6 +28,7 @@ class UserMongoDB:
         user_id = get_user_id(user)
         spongebot_user = SpongebotUser()
         spongebot_user._id = user_id
+        spongebot_user.name = user.name
         spongebot_user.create_date = int(time.time())
         self.userdb.insert_one(spongebot_user.as_document())
 
@@ -54,7 +55,7 @@ class UserMongoDB:
 class SpongebotUser:
     def __init__(self):
         self._id = 0
-        self.user_name = ''
+        self.name = ''
         self.create_date = 0
         self.access_level = 0
         self.current_points = 0
