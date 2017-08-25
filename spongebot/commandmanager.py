@@ -299,12 +299,14 @@ class CommandManager:
         user = self.bot.userdb.get(source.author.id)
         if user is None or len(user.inventory) == 0:
             await self.bot.send_message(source.channel, '```You do not own any items.```')
+            return
 
-        items = [item for item in user.inventory if item.item_type == type]
-        if len(items) == 0:
+        item_names = [item.name for item in user.inventory if item.item_type == type]
+        if len(item_names) == 0:
             await self.bot.send_message(source.channel, '```You do not own any %s items.```' % type)
+            return
 
-        await self.bot.send_message(source.channel, '```%s```' % ','.join(items))
+        await self.bot.send_message(source.channel, '```%s```' % ','.join(item_names))
 
     @command(context=PRIVATE, access=USER, types=(str,))
     async def c_gallery(self, source, name):
