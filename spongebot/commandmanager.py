@@ -294,6 +294,19 @@ class CommandManager:
         await self.bot.crate_manager.generate_crate(source)
 
     @command(context=PRIVATE, access=USER, types=(str,))
+    async def c_list(self, source, type):
+        # Get the user data
+        user = self.bot.userdb.get(source.author.id)
+        if user is None or len(user.inventory) == 0:
+            await self.bot.send_message(source.channel, '```You do not own any items.```')
+
+        items = [item for item in user.inventory if item.item_type == type]
+        if len(items) == 0:
+            await self.bot.send_message(source.channel, '```You do not own any %s items.```' % type)
+
+        await self.bot.send_message(source.channel, '```%s```' % ','.join(items))
+
+    @command(context=PRIVATE, access=USER, types=(str,))
     async def c_gallery(self, source, name):
         framedir = os.path.join('frames', source.author.id)
         if not os.path.isdir(framedir):
