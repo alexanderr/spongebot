@@ -58,7 +58,7 @@ class Spongebot(Client):
 
     def parse_episode_data(self):
         content_directory = self.config.get('content_directory', 'content')
-        content_extention = self.config.get('content_extension', 'avi')
+        content_extension = self.config.get('content_extension', 'avi')
 
         for f in os.listdir(content_directory):
             path = os.path.join(content_directory, f)
@@ -68,7 +68,7 @@ class Spongebot(Client):
             filename, extension = f.split('.')
             filename = filename.lower()
 
-            if extension != content_extention:
+            if extension != content_extension:
                 continue
 
             season, episode = filename.split('-')
