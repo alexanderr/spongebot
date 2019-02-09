@@ -71,9 +71,8 @@ class Spongebot(Client):
             if extension != content_extention:
                 continue
 
-            season = filename[1]
-            episode = filename[3:6]
-            self.episode_data.append(Episode(filename, season, episode, path))
+            season, episode = filename.split('-')
+            self.episode_data.append(Episode(filename, season[1:], episode[1:], path))
             self.log('Found episode %s' % self.episode_data[-1])
 
         self.episode_pool = list(range(len(self.episode_data)))
@@ -99,6 +98,9 @@ class Spongebot(Client):
         access = 0
         if data:
             access = data.access_level
+        else:
+            self.userdb.insert(message.author)
+            data = self.userdb.get(message.author)
 
         self.log('%s used command %s with arguments %s.' % (message.author.name, command, str(args)))
 

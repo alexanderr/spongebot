@@ -36,6 +36,8 @@ class UserMongoDB:
         user_id = get_user_id(user)
 
         document = self.userdb.find_one({'_id': user_id})
+        if document is None:
+            return None
 
         spongebot_user = SpongebotUser()
         spongebot_user.from_document(document)
