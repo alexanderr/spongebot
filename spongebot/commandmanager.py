@@ -1,7 +1,9 @@
 import random
 import datetime
 import os
+import re
 
+from discord.embeds import Embed
 from spongebot.constants import RANKS
 from spongebot.botrequest import SellRequest, BotRequestException
 
@@ -62,6 +64,7 @@ def command(context, access, types=tuple()):
 
             return func(*nargs, **kwargs)
 
+        wrapper.__doc__ = func.__doc__
         return wrapper
     return real_decorator
 
@@ -71,7 +74,25 @@ class CommandManager:
         self.bot = bot
 
     @command(context=PUBLIC, access=USER)
+    async def c_help(self, source):
+        output = '* - Direct Message only\n\n'
+        commands = [command for command in dir(self) if command.startswith('c_')]
+        commands.sort()
+        for command in commands:
+            name = command[2:]
+            if name == 'help':
+                continue
+
+            documentation = getattr(self, command).__doc__
+            documentation = re.sub("\n|\r", "", documentation)
+            output += '%s: %s\n' % (self.bot.config.get('command_delimeter', '$') + name, documentation)
+
+        embed = Embed(title='Commands', description='```%s```' % output, colour=0x7EC0EE)
+        await self.bot.send_message(source.channel, None, embed=embed)
+
+    @command(context=PUBLIC, access=USER)
     async def c_join(self, source):
+        """ Joins the voice channel the invoker is in. """
         channel = source.author.voice_channel
 
         if not channel:
@@ -100,6 +121,7 @@ class CommandManager:
 
     @command(context=PUBLIC, access=ADMIN, types=(str,))
     async def c_joinchannel(self, source, channelId):
+        """ Joins a channel with the ID provided. """
         channel = self.bot.get_channel(channelId)
 
         if not channel:
@@ -117,6 +139,7 @@ class CommandManager:
 
     @command(context=PUBLIC, access=USER)
     async def c_play(self, source):
+        """ Plays a random episode from the episode pool. """
         if self.bot.episode_player and not self.bot.episode_player.is_done():
             await self.bot.send_message(source.channel, 'Sorry, an episode is already playing!')
             return
@@ -149,6 +172,7 @@ class CommandManager:
 
     @command(context=PUBLIC, access=ADMIN)
     async def c_leave(self, source):
+        """ Leaves the current voice channel. """
         if self.bot.episode_player:
             self.bot.episode_player.stop()
             self.bot.episode_player = None
@@ -168,6 +192,7 @@ class CommandManager:
 
     @command(context=PUBLIC, access=USER, types=(str,))
     async def c_request(self, source, episode):
+        """ Request a certain episode to be played. """
         if self.bot.episode_player and not self.bot.episode_player.is_done():
             await self.bot.player.send_message(source.channel, 'Sorry, an episode is already playing!')
             return
@@ -200,6 +225,7 @@ class CommandManager:
 
     @command(context=PUBLIC, access=ADMIN)
     async def c_skip(self, source):
+        """ Skips the episode that is playing. """
         if self.bot.point_task:
             self.bot.point_task.cancel()
             self.bot.point_task = None
@@ -209,6 +235,7 @@ class CommandManager:
 
     @command(context=BOTH, access=USER)
     async def c_info(self, source):
+        """ Lists the invoking user's stats. """
         data = self.bot.userdb.get(source.author)
 
         if data is None:
@@ -238,6 +265,7 @@ class CommandManager:
 
     @command(context=PUBLIC, access=USER, types=(str,))
     async def c_voiceline(self, source, name):
+        """ Plays one of the user's voicelines. """
         vldir = os.path.join('voicelines', source.author.id)
         if not os.path.isdir(vldir):
             await self.bot.send_message(source.channel,
@@ -291,6 +319,7 @@ class CommandManager:
 
     @command(context=PRIVATE, access=USER)
     async def c_opencrate(self, source):
+        """ Opens a crate using your points. * """
         await self.bot.crate_manager.generate_crate(source)
 
     @command(context=PRIVATE, access=USER, types=(str,))
@@ -310,6 +339,7 @@ class CommandManager:
 
     @command(context=PRIVATE, access=USER, types=(str,))
     async def c_gallery(self, source, name):
+        """ Shows all of your unlocked frames. * """
         framedir = os.path.join('frames', source.author.id)
         if not os.path.isdir(framedir):
             await self.bot.send_message(source.channel, '```You have no frames yet! Try opening some crates!```')
@@ -344,6 +374,7 @@ class CommandManager:
 
     @command(context=PRIVATE, access=USER, types=(str, str))
     async def c_sell(self, source, item_type, name):
+        """ Sell one of your unlocked items for 15 points. * """
         if item_type == 'frame' or item_type == 'voiceline':
             user_data = self.bot.userdb.get(source.author)
             if user_data is None:
@@ -364,6 +395,7 @@ class CommandManager:
 
     @command(context=PRIVATE, access=USER, types=())
     async def c_confirm(self, source):
+        """ Confirms your last request. * """
         try:
             msg = self.bot.request_manager.confirm_request(source.author.id)
             msg = '```%s```' % msg
@@ -373,6 +405,7 @@ class CommandManager:
 
     @command(context=PRIVATE, access=USER, types=())
     async def c_cancel(self, source):
+        """ Cancels your last request. * """
         try:
             msg = self.bot.request_manager.cancel_request(source.author.id)
             msg = '```%s```' % msg
@@ -382,6 +415,7 @@ class CommandManager:
 
     @command(context=PRIVATE, access=USER, types=())
     async def c_undo(self, source):
+        """ Undoes the user's last request. * """
         try:
             msg = self.bot.request_manager.undo_request(source.author.id)
             msg = '```%s```' % msg
@@ -391,6 +425,7 @@ class CommandManager:
 
     @command(context=PRIVATE, access=USER, types=(str, str, str))
     async def c_rename(self, source, item_type, from_name, to_name):
+        """ Rename one of your unlocked items. * """
         # Get the user data
         user = self.bot.userdb.get(source.author.id)
         if user is None or len(user.inventory) == 0:
@@ -424,6 +459,7 @@ class CommandManager:
 
     @command(context=BOTH, access=ADMIN, types=(str, int))
     async def c_points(self, source, t_type, amount):
+        """ Add or remove points from the targeted user. """
         # Get the user data
         user = self.bot.userdb.get(source.author.id)
 

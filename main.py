@@ -5,6 +5,7 @@ if sys.version_info < (3, 5):
     sys.exit(0)
 
 import discord
+import os
 
 
 from spongebot.spongebot import Spongebot
@@ -15,6 +16,12 @@ if sys.platform.startswith('win'):
     import asyncio
     loop = asyncio.ProactorEventLoop()
     asyncio.set_event_loop(loop)
+
+subfolders = ['content', 'frames', 'voicelines', 'logs', 'users']
+
+for folder in subfolders:
+    if not os.path.exists(folder):
+        os.mkdir(folder)
 
 
 bot = Spongebot()
