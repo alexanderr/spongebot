@@ -294,16 +294,16 @@ class CommandManager:
         await self.bot.crate_manager.generate_crate(source)
 
     @command(context=PRIVATE, access=USER, types=(str,))
-    async def c_list(self, source, type):
+    async def c_list(self, source, item_type):
         # Get the user data
         user = self.bot.userdb.get(source.author.id)
         if user is None or len(user.inventory) == 0:
             await self.bot.send_message(source.channel, '```You do not own any items.```')
             return
 
-        item_names = [item.name for item in user.inventory if item.item_type == type]
+        item_names = [item.name for item in user.inventory if item.item_type == item_type]
         if len(item_names) == 0:
-            await self.bot.send_message(source.channel, '```You do not own any %s items.```' % type)
+            await self.bot.send_message(source.channel, '```You do not own any %s items.```' % item_type)
             return
 
         await self.bot.send_message(source.channel, '```%s```' % ','.join(item_names))
