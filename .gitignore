@@ -10,6 +10,7 @@ frames/
 voicelines/
 logs/
 users/
+config.json
 
 # Pycharm
 .idea/
