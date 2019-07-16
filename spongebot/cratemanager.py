@@ -1,4 +1,4 @@
-import random
+from random import Random
 import time
 import asyncio
 
@@ -12,6 +12,7 @@ class CrateManager:
         self.bot = bot
         self.crate_queue = []
         self.generated_crate_queue = []
+        self.rng = Random()
 
     def initialize_tasks(self):
         self.bot.loop.create_task(self.generate_crate_task())
@@ -29,10 +30,11 @@ class CrateManager:
 
         self.bot.log('Generating crate type...')
 
-        rng = random.random()
-        random.seed(str(time.time()) + str(source.author.id) + str(id(self)))
+        self.rng.seed(str(time.time()) + str(source.author.id) + str(id(self)))
 
-        if rng < .33:
+        roll = self.rng.random()
+
+        if roll < .33:
             crate = VoicelineCrate(source.author.id, source.channel)
             crate_field = 'voiceline_id'
         else:
@@ -85,7 +87,7 @@ class CrateManager:
                 if isinstance(crate, FrameCrate):
                     # Add crate item to user inventory
                     item = FrameInventoryItem(
-                        'frame', int(time.time()), str(crate.crate_id), crate.crate_id, crate.episode)
+                        'frame', int(time.time()), str(crate.crate_id), crate.crate_id, crate.frame)
                     user.inventory.append(item)
                     # Update user db
                     self.bot.userdb.update(crate.user_id, {'$set': user.as_document()})
@@ -97,7 +99,7 @@ class CrateManager:
                 elif isinstance(crate, VoicelineCrate):
                     # Add crate item to user inventory
                     item = VoicelineInventoryItem(
-                        'voiceline', int(time.time()), str(crate.crate_id), crate.crate_id, crate.episode)
+                        'voiceline', int(time.time()), str(crate.crate_id), crate.crate_id, crate.voiceline)
                     user.inventory.append(item)
                     # Update user db
                     self.bot.userdb.update(crate.user_id, {'$set': user.as_document()})

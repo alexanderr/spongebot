@@ -27,6 +27,8 @@ class Spongebot(Client):
         self.voiceline_player = None
         self.point_task = None
 
+        self.setup_logging()
+
         self.command_manager = CommandManager(self)
         self.userdb = UserMongoDB(self)
         self.crate_manager = CrateManager(self)
@@ -60,20 +62,22 @@ class Spongebot(Client):
         content_directory = self.config.get('content_directory', 'content')
         content_extension = self.config.get('content_extension', 'avi')
 
-        for f in os.listdir(content_directory):
-            path = os.path.join(content_directory, f)
-            if not os.path.isfile(path):
-                continue
+        for root, dirs, files in os.walk(content_directory):
+            for f in files:
+                path = os.path.join(root, f)
+                if not os.path.isfile(path):
+                    continue
 
-            filename, extension = f.split('.')
-            filename = filename.lower()
+                filename, extension = f.rsplit('.', 1)
+                filename = filename.lower()
 
-            if extension != content_extension:
-                continue
+                if extension != content_extension:
+                    continue
 
-            season, episode = filename.split('-')
-            self.episode_data.append(Episode(filename, season[1:], episode[1:], path))
-            self.log('Found episode %s' % self.episode_data[-1])
+                episode_number, episode_name = filename.split(' ', 1)
+                season, episode = int(episode_number[0]), int(episode_number[1:])
+                self.episode_data.append(Episode(filename, season, episode, episode_name, path))
+                self.log('Found episode %s' % self.episode_data[-1])
 
         self.episode_pool = list(range(len(self.episode_data)))
 
@@ -191,11 +195,12 @@ class Spongebot(Client):
 
 
 class Episode:
-    def __init__(self, filename, season, episode, path):
+    def __init__(self, filename, season, episode, name, path):
         self.filename = filename
         self.season = season
         self.episode = episode
+        self.name = name
         self.path = path
 
     def __str__(self):
-        return 's%se%s' % (self.season, self.episode)
+        return self.name

@@ -7,25 +7,10 @@ class Crate:
     def generate(self, *args):
         raise NotImplementedError
 
-    def get_video_filenames(self, season=None):
-        filenames = []
-
-        for f in os.listdir('content'):
-            if not os.path.isfile(os.path.join('content', f)):
-                continue
-
-            if season is not None:
-                if not f.lower().startswith('s%d' % season):
-                    continue
-
-            filenames.append(f)
-
-        return filenames
-
 
 class FrameCrate(Crate):
     FRAME_DIRECTORY = 'frames'
-    COMMAND = 'ffmpeg -i %s -vcodec png -ss %d -s 320x240 -vframes 1 -an -f rawvideo %s'
+    COMMAND = 'ffmpeg -i "%s" -vcodec png -ss %d -s 320x240 -vframes 1 -an -f rawvideo "%s"'
     LENGTH = (11 * 60) - 10
 
     def __init__(self, user_id, channel):
@@ -33,26 +18,27 @@ class FrameCrate(Crate):
         self.channel = channel
         self.crate_id = 0
         self.user_id = user_id
-        self.episode = ''
+        self.episode = None
 
     def generate(self, crate_manager):
-        self.episode = random.choice(self.get_video_filenames())
+        self.episode = random.choice(crate_manager.bot.episode_data)
 
         # too lazy to have ffmpeg read the whole file for the length.
-        if self.episode.lower() == 's1e01c':
+        # Use the episode name instead of episode number because of inconsistencies.
+        if self.episode.name == 'reef blower':
             # Special case: this episode is 3 mins long.
             t = random.randint(5, (60 * 3) - 10)
-        elif self.episode.lower() == 's2e11b':
+        elif self.episode.name == 'gary takes a bath':
             # 6 mins
             t = random.randint(5, (60 * 6) - 10)
-        elif self.episode.lower() == 's2e05a':
+        elif self.episode.name == 'christmas who':
             # 20 mins
             t = random.randint(5, (60 * 20) - 10)
         else:
             # 11 mins usually
             t = random.randint(5, self.LENGTH)
 
-        inpath = os.path.join('content', self.episode)
+        inpath = self.episode.path
 
         directory = os.path.join('frames', self.user_id)
 
@@ -79,9 +65,9 @@ class VoicelineCrate(Crate):
         self.type = 0
 
     def generate(self, crate_manager):
-        self.episode = random.choice(self.get_video_filenames())
+        self.episode = random.choice(crate_manager.bot.episode_data)
 
-        inpath = os.path.join('content', self.episode)
+        inpath = self.episode.path
 
         audio = AudioSegment.from_file(inpath, 'avi')
 

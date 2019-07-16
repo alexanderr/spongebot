@@ -19,6 +19,8 @@ class UserMongoDB:
 
         url = self.bot.config.get('mongodb_url', 'mongodb://localhost')
 
+        self.bot.log('Connecting to MongoDB database at %s...' % url)
+
         self.mongo = pymongo.MongoClient(host=url)
 
         self.mongodb = self.mongo['spongebot']
