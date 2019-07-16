@@ -84,7 +84,9 @@ class CommandManager:
                 continue
 
             documentation = getattr(self, command).__doc__
-            documentation = re.sub("\n|\r", "", documentation)
+            if documentation == None:
+                continue
+
             output += '%s: %s\n' % (self.bot.config.get('command_delimeter', '$') + name, documentation)
 
         embed = Embed(title='Commands', description='```%s```' % output, colour=0x7EC0EE)
