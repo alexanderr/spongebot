@@ -25,9 +25,8 @@ for folder in subfolders:
 
 
 bot = Spongebot()
-bot.setup_logging()
 bot.load_config()
 bot.parse_episode_data()
 
 discord.opus.load_opus(bot.config['opus_path'])
-bot.run(bot.config['username'], bot.config['password'])
+bot.run(bot.config['secret'])
