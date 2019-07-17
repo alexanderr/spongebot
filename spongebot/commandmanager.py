@@ -41,9 +41,14 @@ def command(context, access, types=tuple()):
 
             nargs = [command_manager, source]
 
+            command_args = args[4:]
+
+            if len(command_args) != len(types):
+                return command_manager.invalid_arguments(source, command_name)
+
             for i in range(len(types)):
                 t = types[i]
-                arg = args[i + 4]
+                arg = command_args[i]
 
                 if t == int:
                     try:
