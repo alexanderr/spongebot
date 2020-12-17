@@ -5,6 +5,7 @@ import logging
 import os
 from asyncio import coroutine
 
+from discord import FFmpegPCMAudio
 from discord.client import Client
 
 from spongebot.commandmanager import CommandManager
@@ -112,7 +113,7 @@ class Spongebot(Client):
         self.log('%s used command %s with arguments %s.' % (message.author.name, command, str(args)))
 
         if not hasattr(self.command_manager, 'c_' + command):
-            await self.send_message(message.channel, 'Unknown command ```%s```' % command)
+            await message.channel.send('Unknown command ```%s```' % command)
             return
 
         func = getattr(self.command_manager, 'c_' + command)
@@ -127,7 +128,8 @@ class Spongebot(Client):
                         (self.current_episode.episode, self.current_episode.season)
         play_message += '```Every minute you listen to the episode you will gain 1 point.```\n'
         play_message += "```Use $info to see your stats.```\n"
-        await self.send_message(text_channel,  play_message)
+
+        await text_channel.send(play_message)
 
         self.log('Playing episode %s...' % str(self.current_episode))
 
@@ -139,13 +141,17 @@ class Spongebot(Client):
         if self.voiceline_player is not None and not self.voiceline_player.is_done():
             self.voiceline_player.stop()
 
+        audioObject = FFmpegPCMAudio(self.current_episode.path)
+
         if self.episode_player is None or self.episode_player.is_done():
-            self.episode_player = voice.create_ffmpeg_player(self.current_episode.path, after=after)
-            self.episode_player.start()
+            self.episode_player = voice
+            voice.play(audioObject, after=after)
+            # self.episode_player.start()
         else:
             self.episode_player.stop()
-            self.episode_player = voice.create_ffmpeg_player(self.current_episode.path, after=after)
-            self.episode_player.start()
+            self.episode_player = voice
+            voice.play(audioObject, after=after)
+            # self.episode_player.start()
 
         if self.point_task:
             self.point_task.cancel()
@@ -154,7 +160,7 @@ class Spongebot(Client):
         self.point_task = self.loop.call_later(60, self.give_points, text_channel.server)
 
     async def on_episode_end(self, server):
-        voice = self.voice_client_in(server)
+        voice = server.voice_client
 
         if not voice:
             return
@@ -175,7 +181,7 @@ class Spongebot(Client):
         if self.episode_player.is_done():
             return
 
-        voice = self.voice_client_in(server)
+        voice = server.voice_client
 
         if not voice:
             return

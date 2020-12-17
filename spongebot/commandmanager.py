@@ -101,16 +101,16 @@ class CommandManager:
     @command(context=PUBLIC, access=USER)
     async def c_join(self, source):
         """ Joins the voice channel the invoker is in. """
-        channel = source.author.voice_channel
+        channel = source.author.voice.channel
 
         if not channel:
             await source.channel.send('```You are not in a voice channel!```')
             return
 
-        voice = self.bot.voice_client_in(channel.server)
+        voice = source.channel.guild.voice_client
 
         if not voice:
-            voice = await self.bot.join_voice_channel(channel)
+            voice = await channel.connect()
         elif voice.channel != channel:
             voice = await voice.move_to(channel)
         else:
@@ -136,10 +136,10 @@ class CommandManager:
             await source.channel.send('```Invalid channel!```')
             return
 
-        voice = self.bot.voice_client_in(channel.server)
+        voice = source.channel.guild.voice_client
 
         if not voice:
-            await self.bot.join_voice_channel(channel)
+            await channel.connect()
         elif voice.channel != channel:
             await voice.move_to(channel)
         else:
@@ -156,18 +156,18 @@ class CommandManager:
             self.bot.point_task.cancel()
             self.bot.point_task = None
 
-        voice = self.bot.voice_client_in(source.channel.server)
-        voice_channel = source.author.voice_channel
+        voice = source.channel.guild.voice_client
+        voice_channel = source.author.voice.channel
 
         if not voice_channel:
             await source.channel.send('```You are not in a voice channel!```')
             return
 
         if not voice:
-            voice = await self.bot.join_voice_channel(voice_channel)
+            voice = await voice_channel.connect()
         elif voice.channel != voice_channel:
             voice.move_to(voice_channel)
-            voice = self.bot.voice_client_in(source.channel.server)
+            voice = source.channel.guild.voice_client
 
         if len(self.bot.episode_pool) == 0:
             self.bot.episode_pool = list(range(len(self.bot.episode_data)))
@@ -192,7 +192,7 @@ class CommandManager:
             self.bot.point_task.cancel()
             self.bot.point_task = None
 
-        voice = self.bot.voice_client_in(source.channel.server)
+        voice = source.channel.guild.voice_client
         if not voice:
             return
 
@@ -209,13 +209,13 @@ class CommandManager:
             self.bot.point_task.cancel()
             self.bot.point_task = None
 
-        voice = self.bot.voice_client_in(source.channel.server)
+        voice = source.channel.guild.voice_client
 
-        if source.author.voice_channel:
+        if source.author.voice.channel:
             if not voice:
-                voice = await self.bot.join_voice_channel(source.author.voice_channel)
-            elif voice.channel != source.author.voice_channel:
-                voice = await voice.move_to(source.author.voice_channel)
+                voice = await source.author.voice.channel.connect()
+            elif voice.channel != source.author.voice.channel:
+                voice = await voice.move_to(source.author.voice.channel)
 
         episode_data = None
 
@@ -308,15 +308,15 @@ class CommandManager:
         except IOError:
             await source.channel.send('```Failed to find voiceline.```')
         else:
-            channel = source.author.voice.voice_channel
+            channel = source.author.voice.channel.voice_channel
             if not channel:
                 await source.channel.send("```You are not in a voice channel.```")
                 return
 
-            voice = self.bot.voice_client_in(channel.server)
+            voice = source.channel.guild.voice_client
             if not voice:
-                voice = await self.bot.join_voice_channel(channel)
-            elif voice.channel != source.author.voice_channel:
+                voice = await channel.connect()
+            elif voice.channel != source.author.voice.channel:
                 voice = await voice.move_to(channel)
 
             if self.bot.voiceline_player and not self.bot.voiceline_player.is_done():
