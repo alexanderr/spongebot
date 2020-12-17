@@ -81,7 +81,7 @@ class Spongebot(Client):
                     continue
 
                 episode_number, episode_name = filename.split(' ', 1)
-                season, episode = int(episode_number[0]), int(episode_number[1:])
+                season, episode = int(episode_number[:2]), int(episode_number[2:])
                 self.episode_data.append(Episode(filename, season, episode, episode_name, path))
                 self.log('Found episode %s' % self.episode_data[-1])
 
