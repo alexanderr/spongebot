@@ -3,6 +3,7 @@ import datetime
 import os
 import re
 
+from discord.abc import PrivateChannel
 from discord.embeds import Embed
 from spongebot.constants import RANKS
 from spongebot.botrequest import SellRequest, BotRequestException
@@ -30,10 +31,10 @@ def command(context, access, types=tuple()):
             current_access = args[3]
 
             if context == PRIVATE:
-                if not source.channel.is_private:
+                if not isinstance(source.channel, PrivateChannel):
                     return command_manager.invalid_context(source, command_name, context)
             elif context == PUBLIC:
-                if source.channel.is_private:
+                if isinstance(source.channel, PrivateChannel):
                     return command_manager.invalid_context(source, command_name, context)
 
             if access > current_access:
@@ -95,7 +96,7 @@ class CommandManager:
             output += '%s: %s\n' % (self.bot.config.get('command_delimeter', '$') + name, documentation)
 
         embed = Embed(title='Commands', description='```%s```' % output, colour=0x7EC0EE)
-        await self.bot.send_message(source.channel, None, embed=embed)
+        await source.channel.send(None, embed=embed)
 
     @command(context=PUBLIC, access=USER)
     async def c_join(self, source):
@@ -103,7 +104,7 @@ class CommandManager:
         channel = source.author.voice_channel
 
         if not channel:
-            await self.bot.send_message(source.channel, '```You are not in a voice channel!```')
+            await source.channel.send('```You are not in a voice channel!```')
             return
 
         voice = self.bot.voice_client_in(channel.server)
@@ -113,7 +114,7 @@ class CommandManager:
         elif voice.channel != channel:
             voice = await voice.move_to(channel)
         else:
-            await self.bot.send_message(source.channel, '```I am already in the channel!```')
+            await source.channel.send('```I am already in the channel!```')
 
         def after():
             import datetime
@@ -132,7 +133,7 @@ class CommandManager:
         channel = self.bot.get_channel(channelId)
 
         if not channel:
-            await self.bot.send_message(source.channel, '```Invalid channel!```')
+            await source.channel.send('```Invalid channel!```')
             return
 
         voice = self.bot.voice_client_in(channel.server)
@@ -142,13 +143,13 @@ class CommandManager:
         elif voice.channel != channel:
             await voice.move_to(channel)
         else:
-            await self.bot.send_message(source.channel, '```I am already in the channel!```')
+            await source.channel.send('```I am already in the channel!```')
 
     @command(context=PUBLIC, access=USER)
     async def c_play(self, source):
         """ Plays a random episode from the episode pool. """
         if self.bot.episode_player and not self.bot.episode_player.is_done():
-            await self.bot.send_message(source.channel, 'Sorry, an episode is already playing!')
+            await source.channel.send('Sorry, an episode is already playing!')
             return
 
         if self.bot.point_task:
@@ -159,7 +160,7 @@ class CommandManager:
         voice_channel = source.author.voice_channel
 
         if not voice_channel:
-            await self.bot.send_message(source.channel, '```You are not in a voice channel!```')
+            await source.channel.send('```You are not in a voice channel!```')
             return
 
         if not voice:
@@ -223,7 +224,7 @@ class CommandManager:
                 episode_data = e
 
         if episode_data is None:
-            await self.bot.send_message(source.channel, 'Sorry, that episode does not exist!')
+            await source.channel.send('Sorry, that episode does not exist!')
             return
 
         self.bot.current_episode = episode_data
@@ -268,7 +269,7 @@ class CommandManager:
         nmessage += 'Episodes watched: %d' % data.episodes_watched
         nmessage += '```'
 
-        await self.bot.send_message(source.channel, nmessage)
+        await source.channel.send(nmessage)
 
     @command(context=PUBLIC, access=USER, types=(str,))
     async def c_voiceline(self, source, name):
@@ -280,23 +281,23 @@ class CommandManager:
             return
 
         if self.bot.current_episode is not None:
-            await self.bot.send_message(source.channel, "```An episode is playing! Wait until it is over.```")
+            await source.channel.send("```An episode is playing! Wait until it is over.```")
             return
 
         if self.bot.episode_player and not self.bot.episode_player.is_done():
-            await self.bot.send_message(source.channel, "```An episode is playing! Wait until it is over.```")
+            await source.channel.send("```An episode is playing! Wait until it is over.```")
             return
 
         # Get the user data
         user = self.bot.userdb.get(source.author.id)
         if user is None or len(user.inventory) == 0:
-            await self.bot.send_message(source.channel, '```You do not own any voicelines.```')
+            await source.channel.send('```You do not own any voicelines.```')
 
         # Get the voice line from the name
         try:
             voiceline = [item for item in user.inventory if item.name == name and item.item_type == 'voiceline'][0]
         except IndexError:
-            await self.bot.send_message(source.channel, '```Invalid voiceline specified.```')
+            await source.channel.send('```Invalid voiceline specified.```')
             return
 
         # Check if we have this voiceline in our file system
@@ -305,11 +306,11 @@ class CommandManager:
             if not os.path.isfile(fpath):
                 raise IOError
         except IOError:
-            await self.bot.send_message(source.channel, '```Failed to find voiceline.```')
+            await source.channel.send('```Failed to find voiceline.```')
         else:
             channel = source.author.voice.voice_channel
             if not channel:
-                await self.bot.send_message(source.channel, "```You are not in a voice channel.```")
+                await source.channel.send("```You are not in a voice channel.```")
                 return
 
             voice = self.bot.voice_client_in(channel.server)
@@ -349,19 +350,19 @@ class CommandManager:
         """ Shows all of your unlocked frames. * """
         framedir = os.path.join('frames', source.author.id)
         if not os.path.isdir(framedir):
-            await self.bot.send_message(source.channel, '```You have no frames yet! Try opening some crates!```')
+            await source.channel.send('```You have no frames yet! Try opening some crates!```')
             return
 
         # Get the user data
         user = self.bot.userdb.get(source.author.id)
         if user is None or len(user.inventory) == 0:
-            await self.bot.send_message(source.channel, '```You do not own any frames.```')
+            await source.channel.send('```You do not own any frames.```')
 
         # Get the frame from the name
         try:
             frame = [item for item in user.inventory if item.name == name and item.item_type == 'frame'][0]
         except IndexError:
-            await self.bot.send_message(source.channel, '```Invalid frame specified.```')
+            await source.channel.send('```Invalid frame specified.```')
             return
 
         # Check if the frame is in our file system
@@ -369,12 +370,12 @@ class CommandManager:
             fpath = os.path.join(framedir, str(frame.idx) + '.png')
             f = open(fpath, 'rb')
         except IOError:
-            await self.bot.send_message(source.channel, '```Invalid index specified.```')
+            await source.channel.send('```Invalid index specified.```')
         else:
             createTime = os.stat(fpath).st_ctime
             cdate = datetime.datetime.fromtimestamp(int(createTime)).strftime('%Y-%m-%d %H:%M:%S')
 
-            await self.bot.send_message(source.channel, '```Opened %s CST:```' % cdate)
+            await source.channel.send('```Opened %s CST:```' % cdate)
             await self.bot.send_file(source.channel, f)
 
             f.close()
@@ -406,9 +407,9 @@ class CommandManager:
         try:
             msg = self.bot.request_manager.confirm_request(source.author.id)
             msg = '```%s```' % msg
-            await self.bot.send_message(source.channel, msg)
+            await source.channel.send(msg)
         except BotRequestException as e:
-            await self.bot.send_message(source.channel, '```%s```' % e.message)
+            await source.channel.send('```%s```' % e.message)
 
     @command(context=PRIVATE, access=USER, types=())
     async def c_cancel(self, source):
@@ -416,9 +417,9 @@ class CommandManager:
         try:
             msg = self.bot.request_manager.cancel_request(source.author.id)
             msg = '```%s```' % msg
-            await self.bot.send_message(source.channel, msg)
+            await source.channel.send(msg)
         except BotRequestException as e:
-            await self.bot.send_message(source.channel, '```%s```' % e.message)
+            await source.channel.send('```%s```' % e.message)
 
     @command(context=PRIVATE, access=USER, types=())
     async def c_undo(self, source):
@@ -426,9 +427,9 @@ class CommandManager:
         try:
             msg = self.bot.request_manager.undo_request(source.author.id)
             msg = '```%s```' % msg
-            await self.bot.send_message(source.channel, msg)
+            await source.channel.send(msg)
         except BotRequestException as e:
-            await self.bot.send_message(source.channel, '```%s```' % e.message)
+            await source.channel.send('```%s```' % e.message)
 
     @command(context=PRIVATE, access=USER, types=(str, str, str))
     async def c_rename(self, source, item_type, from_name, to_name):
@@ -436,23 +437,23 @@ class CommandManager:
         # Get the user data
         user = self.bot.userdb.get(source.author.id)
         if user is None or len(user.inventory) == 0:
-            await self.bot.send_message(source.channel, '```You do not own any items to rename.```')
+            await source.channel.send('```You do not own any items to rename.```')
             return
         if to_name.isdigit():
-            await self.bot.send_message(source.channel, '```Please choose a different name; digits are reserved.```')
+            await source.channel.send('```Please choose a different name; digits are reserved.```')
             return
 
         # Get the voice line from the name
         try:
             item_to_rename = [item for item in user.inventory if item.name == from_name and item.item_type == item_type][0]
         except IndexError:
-            await self.bot.send_message(source.channel, '```You do not own a %s named %s.```' % (item_type, from_name))
+            await source.channel.send('```You do not own a %s named %s.```' % (item_type, from_name))
             return
 
         items_with_name = [item for item in user.inventory if item.name == to_name and item.item_type == item_type]
         if len(items_with_name) != 0:
             # Cannot have multiple items of the same types with similar names
-            await self.bot.send_message(source.channel, '```You already have a %s named %s.```' % (item_type, to_name))
+            await source.channel.send('```You already have a %s named %s.```' % (item_type, to_name))
             return
 
         # Rename item
@@ -471,25 +472,25 @@ class CommandManager:
         user = self.bot.userdb.get(source.author.id)
 
         if user is None:
-            await self.bot.send_message(source.channel, '```Invalid user.```')
+            await source.channel.send('```Invalid user.```')
             return
 
         if t_type == 'add':
             user.total_points += amount
             user.current_points += amount
-            await self.bot.send_message(source.channel, '```Adding %s point(s) to %s.```' % (amount, source.author.name))
+            await source.channel.send('```Adding %s point(s) to %s.```' % (amount, source.author.name))
         elif t_type == 'remove':
             user.total_points = max(0, user.total_points - amount)
             user.current_points = max(0, user.current_points - amount)
-            await self.bot.send_message(source.channel, '```Removing %s point(s) from %s.```' % (amount, source.author.name))
+            await source.channel.send('```Removing %s point(s) from %s.```' % (amount, source.author.name))
         else:
-            await self.bot.send_message(source.channel, '```Invalid use of points command.```')
+            await source.channel.send('```Invalid use of points command.```')
             return
 
         self.bot.userdb.update(user, {'$set': user.as_document()})
 
     async def invalid_arguments(self, source, command_name):
-        await self.bot.send_message(source.channel, '```Invalid arguments to command %s.```' % command_name)
+        await source.channel.send('```Invalid arguments to command %s.```' % command_name)
 
     async def invalid_context(self, source, command_name, context):
         if context == PUBLIC:

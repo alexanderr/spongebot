@@ -21,11 +21,11 @@ class CrateManager:
     async def generate_crate(self, source):
         data = self.bot.userdb.get(source.author)
         if data is None:
-            await self.bot.send_message(source.channel, '```You need at least %d points to open a crate.```' % CRATE_PRICE)
+            await source.channel.send('```You need at least %d points to open a crate.```' % CRATE_PRICE)
             return
 
         if data.current_points < CRATE_PRICE:
-            await self.bot.send_message(source.channel, '```You need at least %d points to open a crate.```' % CRATE_PRICE)
+            await source.channel.send('```You need at least %d points to open a crate.```' % CRATE_PRICE)
             return
 
         self.bot.log('Generating crate type...')
@@ -50,7 +50,7 @@ class CrateManager:
         elif isinstance(crate, VoicelineCrate):
             crate.crate_id = data.voiceline_id
 
-        await self.bot.send_message(source.channel, '```Opening a crate for you... This might take a few seconds...```')
+        await source.channel.send('```Opening a crate for you... This might take a few seconds...```')
 
         self.bot.log('Adding crate type %s to queue for %s...' % (crate.__class__.__name__, crate.user_id))
 

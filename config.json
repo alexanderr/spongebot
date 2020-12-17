@@ -1,5 +1,4 @@
 {
-  "username": "",
-  "password": "",
-  "opus_path": "libopus/libopus-0.dll"
+  "token": "",
+  "opus_path": "libopus/libopus-0.x64.dll"
 }

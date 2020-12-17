@@ -1,5 +1,5 @@
-aiohttp==1.0.5
-async-timeout==1.2.1
-discord.py==0.16.8
-pydub==0.20.0
-pymongo==3.2.2
+aiohttp
+async-timeout
+discord.py
+pydub
+pymongo

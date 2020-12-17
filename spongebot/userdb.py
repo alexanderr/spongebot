@@ -2,10 +2,11 @@ import time
 
 import pymongo
 from discord.user import User
+from discord.member import Member
 
 
 def get_user_id(user):
-    if isinstance(user, User) or issubclass(user.__class__, User):
+    if isinstance(user, User) or issubclass(user.__class__, User) or issubclass(user.__class__, Member):
         return user.id
     elif isinstance(user, SpongebotUser):
         return user.as_document()['_id']

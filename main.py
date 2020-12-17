@@ -29,4 +29,21 @@ bot.load_config()
 bot.parse_episode_data()
 
 discord.opus.load_opus(bot.config['opus_path'])
-bot.run(bot.config['secret'])
+
+if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_until_complete(bot.authenticate())
+    except KeyboardInterrupt:
+        print('Exiting...')
+    except Exception as e:
+        print(type(e))
+        raise e
+
+    loop.run_until_complete(bot.logout())
+    for task in asyncio.Task.all_tasks():
+        task.cancel()
+
+    if not loop.is_closed():
+        asyncio.ensure_future(loop.stop())
+

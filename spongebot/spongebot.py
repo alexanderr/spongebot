@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import os
+from asyncio import coroutine
 
 from discord.client import Client
 
@@ -33,6 +34,11 @@ class Spongebot(Client):
         self.userdb = UserMongoDB(self)
         self.crate_manager = CrateManager(self)
         self.request_manager = RequestManager(self)
+
+    @coroutine
+    def authenticate(self):
+        yield from self.login(self.config['token'])
+        yield from self.connect()
 
     def setup_logging(self):
         self.logger = logging.getLogger('spongebot')
@@ -80,9 +86,6 @@ class Spongebot(Client):
                 self.log('Found episode %s' % self.episode_data[-1])
 
         self.episode_pool = list(range(len(self.episode_data)))
-
-    async def on_login(self):
-        self.log('Client is logged in!')
 
     async def on_ready(self):
         self.crate_manager.initialize_tasks()
